@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>For My Maryomty ❤️</title>
+    <style>
+        body { margin: 0; background: #fff5f7; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-wrapper { position: relative; width: 800px; height: 600px; border: 8px solid #ff4d6d; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: white; overflow: hidden; }
+        canvas { display: block; background: linear-gradient(#fff5f7, #ffe3e3); cursor: none; }
+        
+        /* UI Overlay */
+        #ui-layer { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-around; color: #ff4d6d; font-weight: bold; font-size: 20px; pointer-events: none; }
+        
+        /* Intro Screen */
+        #intro-screen, #end-screen { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
+        h1 { color: #ff4d6d; font-size: 40px; margin-bottom: 10px; }
+        .play-btn { background: #28a745; color: white; border: none; padding: 15px 40px; font-size: 24px; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
+        .play-btn:hover { transform: scale(1.1); background: #218838; }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <div id="ui-layer">
+        <div>Time: <span id="timer">60</span>s</div>
+        <div>Score: <span id="score">0</span></div>
+        <div>High Score: <span id="high-score">0</span></div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="intro-screen">
+        <h1>Click play ya maryomtyy😝✌️</h1>
+        <p style="font-size: 18px; color: #a04f4f;">Have fun ya cutie!</p>
+        <button class="play-btn" onclick="startGame()">Play</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="end-screen" style="display:none;">
+        <h1 id="end-msg">💋شطورة كسبتي قلبي مواهه</h1>
+        <p id="final-score" style="font-size: 22px;"></p>
+        <button class="play-btn" onclick="location.reload()">تلعبي تاني؟</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 800; canvas.height = 600;
+
+    let score = 0;
+    let timeLeft = 60;
+    let gameActive = false;
+    let highScore = localStorage.getItem("maryamHighScore") || 0;
+    document.getElementById("high-score").innerText = highScore;
+
+    const items = [];
+    const romanticWords = ["انت مجنون؟", "بحبك", "انت بجد؟", "هو انت طبيعي؟", "❤️", "🌹", "تمام", "عبدالرحمن انا بعشقك", "تعالى نتفرج على فيلم", "انا بحب كيرا اكتر منك", "وربتاهعيط", "والنبيي"];
+
+    const maryam = { x: 360, y: 500, w: 80, h: 80, img: new Image() };
+    maryam.img.src = 'Maryam.jpg';
+
+    const abdel = { x: 350, y: 20, w: 90, h: 90, img: new Image(), speed: 4 };
+    abdel.img.src = 'Abdelrahman.jpg';
+
+    canvas.addEventListener("mousemove", (e) => {
+        let rect = canvas.getBoundingClientRect();
+        maryam.x = e.clientX - rect.left - maryam.w/2;
+        // Keep in bounds
+        if (maryam.x < 0) maryam.x = 0;
+        if (maryam.x > canvas.width - maryam.w) maryam.x = canvas.width - maryam.w;
+    });
+
+    function spawnLove() {
+        if (!gameActive) return;
+        const text = romanticWords[Math.floor(Math.random() * romanticWords.length)];
+        items.push({ 
+            x: abdel.x + 40, 
+            y: abdel.y + 80, 
+            text: text, 
+            speed: 3 + Math.random() * 3,
+            color: text.length > 2 ? "#ff4d6d" : "#ff0000" // Red for emojis, Pink for Arabic
+        });
+    }
+
+    function startGame() {
+        document.getElementById("intro-screen").style.display = "none";
+        gameActive = true;
+        let timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById("timer").innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                endGame();
+            }
+        }, 1000);
+        loop();
+    }
+
+    function endGame() {
+        gameActive = false;
+        document.getElementById("end-screen").style.display = "flex";
+        document.getElementById("final-score").innerText = "كسبتي " + score + " نقطة من قلبي";
+        
+        if (score > highScore) {
+            localStorage.setItem("maryamHighScore", score);
+            document.getElementById("end-msg").innerText = "💋شطورة كسبتي قلبي مواهه";
+        }
+    }
+
+    function update() {
+        if (!gameActive) return;
+
+        // Move Abdelrahman (AI)
+        abdel.x += abdel.speed;
+        if (abdel.x > canvas.width - abdel.w || abdel.x < 0) abdel.speed *= -1;
+
+        // Drop items
+        if (Math.random() < 0.04) spawnLove();
+
+        items.forEach((item, index) => {
+            item.y += item.speed;
+            
+            // Catch Collision
+            if (item.y > maryam.y && item.y < maryam.y + maryam.h && 
+                item.x > maryam.x && item.x < maryam.x + maryam.w) {
+                score += 10;
+                document.getElementById("score").innerText = score;
+                items.splice(index, 1);
+            }
+            // Remove if off screen
+            if (item.y > canvas.height) items.splice(index, 1);
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw Players
+        ctx.drawImage(maryam.img, maryam.x, maryam.y, maryam.w, maryam.h);
+        ctx.drawImage(abdel.img, abdel.x, abdel.y, abdel.w, abdel.h);
+
+        // Draw Love Items
+        items.forEach(item => {
+            ctx.fillStyle = item.color;
+            ctx.font = "bold 24px 'Arial'";
+            ctx.fillText(item.text, item.x, item.y);
+        });
+    }
+
+    function loop() {
+        if (!gameActive) return;
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+</script>
+</body>
+</html>
