@@ -1,42 +1,98 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>For My Maryomty ❤️</title>
     <style>
-        body { margin: 0; background: #fff5f7; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-wrapper { position: relative; width: 800px; height: 600px; border: 8px solid #ff4d6d; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: white; overflow: hidden; }
-        canvas { display: block; background: linear-gradient(#fff5f7, #ffe3e3); cursor: none; }
+        /* Mobile First Styles */
+        body { 
+            margin: 0; 
+            background: #fff5f7; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            touch-action: none; /* Prevents scrolling while playing */
+        }
         
-        /* UI Overlay */
-        #ui-layer { position: absolute; top: 0; width: 100%; padding: 15px; display: flex; justify-content: space-around; color: #ff4d6d; font-weight: bold; font-size: 20px; pointer-events: none; }
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Looks good on mobile and desktop */
+            aspect-ratio: 3 / 4;
+            margin: 10px;
+            border: 5px solid #ff4d6d;
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%;
+            background: linear-gradient(#fff5f7, #ffe3e3); 
+        }
         
-        /* Intro Screen */
-        #intro-screen, #end-screen { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; }
-        h1 { color: #ff4d6d; font-size: 40px; margin-bottom: 10px; }
-        .play-btn { background: #28a745; color: white; border: none; padding: 15px 40px; font-size: 24px; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4); }
-        .play-btn:hover { transform: scale(1.1); background: #218838; }
+        #ui-layer { 
+            position: absolute; 
+            top: 0; 
+            width: 100%; 
+            padding: 10px; 
+            display: flex; 
+            justify-content: space-around; 
+            color: #ff4d6d; 
+            font-weight: bold; 
+            font-size: 16px; 
+            pointer-events: none; 
+            z-index: 5;
+        }
+        
+        #intro-screen, #end-screen { 
+            position: absolute; 
+            inset: 0; 
+            background: rgba(255, 255, 255, 0.95); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 10; 
+            text-align: center; 
+            padding: 20px;
+        }
+
+        h1 { color: #ff4d6d; font-size: 28px; margin-bottom: 10px; }
+        .play-btn { 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 12px 30px; 
+            font-size: 20px; 
+            border-radius: 50px; 
+            cursor: pointer; 
+        }
     </style>
 </head>
 <body>
 
-<div id="game-wrapper">
+<div id="game-container">
     <div id="ui-layer">
         <div>Time: <span id="timer">60</span>s</div>
         <div>Score: <span id="score">0</span></div>
-        <div>High Score: <span id="high-score">0</span></div>
     </div>
 
-    <!-- Start Screen -->
     <div id="intro-screen">
         <h1>Click play ya maryomtyy😝✌️</h1>
-        <p style="font-size: 18px; color: #a04f4f;">Have fun ya cutie!</p>
+        <p style="color: #a04f4f;">Have fun ya cutiee</p>
         <button class="play-btn" onclick="startGame()">Play</button>
     </div>
 
-    <!-- Game Over Screen -->
     <div id="end-screen" style="display:none;">
-        <h1 id="end-msg">💋شطورة كسبتي قلبي مواهه</h1>
-        <p id="final-score" style="font-size: 22px;"></p>
+        <h1 id="end-msg">💋شطورة يبت كسبتي قلبي</h1>
+        <p id="final-score"></p>
         <button class="play-btn" onclick="location.reload()">تلعبي تاني؟</button>
     </div>
 
@@ -46,40 +102,66 @@
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    canvas.width = 800; canvas.height = 600;
+
+    // Dynamic sizing for responsiveness
+    function resize() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
     let score = 0;
     let timeLeft = 60;
     let gameActive = false;
-    let highScore = localStorage.getItem("maryamHighScore") || 0;
-    document.getElementById("high-score").innerText = highScore;
 
     const items = [];
     const romanticWords = ["انت مجنون؟", "بحبك", "انت بجد؟", "هو انت طبيعي؟", "❤️", "🌹", "تمام", "عبدالرحمن انا بعشقك", "تعالى نتفرج على فيلم", "انا بحب كيرا اكتر منك", "وربتاهعيط", "والنبيي"];
 
-    const maryam = { x: 360, y: 500, w: 80, h: 80, img: new Image() };
+    // Character sizes relative to screen
+    const charSize = canvas.width * 0.2; 
+    const maryam = { x: canvas.width/2 - charSize/2, y: canvas.height - charSize - 20, w: charSize, h: charSize, img: new Image() };
     maryam.img.src = 'Maryam.jpg';
 
-    const abdel = { x: 350, y: 20, w: 90, h: 90, img: new Image(), speed: 4 };
+    const abdel = { x: 0, y: 20, w: charSize, h: charSize, img: new Image(), speed: 3 };
     abdel.img.src = 'Abdelrahman.jpg';
 
-    canvas.addEventListener("mousemove", (e) => {
+    // --- Control Logic (Mouse + Touch) ---
+    function handleMove(e) {
+        if (!gameActive) return;
+        let clientX;
+        if (e.touches) {
+            clientX = e.touches[0].clientX;
+        } else {
+            clientX = e.clientX;
+        }
+        
         let rect = canvas.getBoundingClientRect();
-        maryam.x = e.clientX - rect.left - maryam.w/2;
+        let relativeX = clientX - rect.left;
+        
+        // Center character on finger/cursor
+        maryam.x = relativeX - maryam.w / 2;
+
         // Keep in bounds
         if (maryam.x < 0) maryam.x = 0;
         if (maryam.x > canvas.width - maryam.w) maryam.x = canvas.width - maryam.w;
-    });
+    }
+
+    canvas.addEventListener("mousemove", handleMove);
+    canvas.addEventListener("touchmove", (e) => {
+        handleMove(e);
+        e.preventDefault(); // Prevents page wobbling while playing
+    }, { passive: false });
 
     function spawnLove() {
         if (!gameActive) return;
         const text = romanticWords[Math.floor(Math.random() * romanticWords.length)];
         items.push({ 
-            x: abdel.x + 40, 
-            y: abdel.y + 80, 
+            x: abdel.x + abdel.w/2, 
+            y: abdel.y + abdel.h, 
             text: text, 
-            speed: 3 + Math.random() * 3,
-            color: text.length > 2 ? "#ff4d6d" : "#ff0000" // Red for emojis, Pink for Arabic
+            speed: 2 + Math.random() * 3,
+            fontSize: Math.floor(canvas.width * 0.06)
         });
     }
 
@@ -87,12 +169,10 @@
         document.getElementById("intro-screen").style.display = "none";
         gameActive = true;
         let timerInterval = setInterval(() => {
+            if (!gameActive) { clearInterval(timerInterval); return; }
             timeLeft--;
             document.getElementById("timer").innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                endGame();
-            }
+            if (timeLeft <= 0) endGame();
         }, 1000);
         loop();
     }
@@ -101,49 +181,39 @@
         gameActive = false;
         document.getElementById("end-screen").style.display = "flex";
         document.getElementById("final-score").innerText = "كسبتي " + score + " نقطة من قلبي";
-        
-        if (score > highScore) {
-            localStorage.setItem("maryamHighScore", score);
-            document.getElementById("end-msg").innerText = "💋شطورة كسبتي قلبي مواهه";
-        }
     }
 
     function update() {
-        if (!gameActive) return;
-
-        // Move Abdelrahman (AI)
         abdel.x += abdel.speed;
         if (abdel.x > canvas.width - abdel.w || abdel.x < 0) abdel.speed *= -1;
 
-        // Drop items
-        if (Math.random() < 0.04) spawnLove();
+        if (Math.random() < 0.03) spawnLove();
 
-        items.forEach((item, index) => {
+        for (let i = items.length - 1; i >= 0; i--) {
+            let item = items[i];
             item.y += item.speed;
             
-            // Catch Collision
+            // Collision Detection
             if (item.y > maryam.y && item.y < maryam.y + maryam.h && 
                 item.x > maryam.x && item.x < maryam.x + maryam.w) {
                 score += 10;
                 document.getElementById("score").innerText = score;
-                items.splice(index, 1);
+                items.splice(i, 1);
+                continue;
             }
-            // Remove if off screen
-            if (item.y > canvas.height) items.splice(index, 1);
-        });
+            if (item.y > canvas.height) items.splice(i, 1);
+        }
     }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw Players
         ctx.drawImage(maryam.img, maryam.x, maryam.y, maryam.w, maryam.h);
         ctx.drawImage(abdel.img, abdel.x, abdel.y, abdel.w, abdel.h);
 
-        // Draw Love Items
         items.forEach(item => {
-            ctx.fillStyle = item.color;
-            ctx.font = "bold 24px 'Arial'";
+            ctx.fillStyle = "#ff4d6d";
+            ctx.font = `bold ${item.fontSize}px Arial`;
+            ctx.textAlign = "center";
             ctx.fillText(item.text, item.x, item.y);
         });
     }
